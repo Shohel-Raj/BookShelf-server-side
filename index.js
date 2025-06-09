@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-const { MongoClient, ServerApiVersion, } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -49,6 +49,14 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) }
+
+      const result = await bookshelfColletion.findOne(quary);
+
+      res.send(result)
+    })
 
     app.post('/addBook', async (req, res) => {
       const newBook = req.body
