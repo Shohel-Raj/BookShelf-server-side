@@ -45,6 +45,19 @@ async function run() {
       if (emailParams) {
         quary = { userEmail: { $regex: `^${emailParams}$`, } }
       }
+     
+      const result = await bookshelfColletion.find(quary).toArray();
+      res.send(result)
+    })
+
+
+    app.get('/filtered', async (req, res) => {
+      const { category } = req.query;
+    
+      let quary = {
+        reading_status: { $regex: `^${category}$`, $options: 'i' } 
+      }
+     
       const result = await bookshelfColletion.find(quary).toArray();
       res.send(result)
     })
