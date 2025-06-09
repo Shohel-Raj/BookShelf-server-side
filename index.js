@@ -26,10 +26,39 @@ app.get('/', (req, res) => {
 })
 
 
+
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const database = client.db('bookshelfDB')
+    const bookshelfColletion = database.collection('BooksCollection')
+
+
+    app.get('/books', async (req, res) => {
+      const { emailParams } = req.query;
+      let quary = {}
+
+
+      if (emailParams) {
+        quary = { userEmail: { $regex: `^${emailParams}$`, } }
+      }
+      const result = await bookshelfColletion.find(quary).toArray();
+      res.send(result)
+    })
+
+
+    app.post('/addBook', async (req, res) => {
+      const newBook = req.body
+      const result = await bookshelfColletion.insertOne(newBook);
+      res.send(result)
+    })
+
+    
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
