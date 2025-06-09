@@ -56,6 +56,19 @@ async function run() {
       res.send(result)
     })
 
+    app.put('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const UpdatePlant = req.body;
+
+      const updateDoc = {
+        $set: UpdatePlant
+      }
+      const result = await bookshelfColletion.updateOne(filter, updateDoc);
+
+      res.send(result)
+
+    });
     
 
 
