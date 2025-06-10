@@ -53,11 +53,20 @@ async function run() {
 
     app.get('/filtered', async (req, res) => {
       const { category } = req.query;
+      const { search } = req.query;
     
       let quary = {
-        reading_status: { $regex: `^${category}$`, $options: 'i' } 
+         
       }
      
+      if(category){
+        quary = {reading_status: { $regex: `^${category}$`, $options: 'i' }}
+      }
+
+      if(search){
+         quary = {book_title: { $regex: search, $options: 'i' }}
+      }
+
       const result = await bookshelfColletion.find(quary).toArray();
       res.send(result)
     })
