@@ -45,7 +45,7 @@ async function run() {
       if (emailParams) {
         quary = { userEmail: { $regex: `^${emailParams}$`, } }
       }
-     
+
       const result = await bookshelfColletion.find(quary).toArray();
       res.send(result)
     })
@@ -54,17 +54,17 @@ async function run() {
     app.get('/filtered', async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
-    
+
       let quary = {
-         
-      }
-     
-      if(category){
-        quary = {reading_status: { $regex: `^${category}$`, $options: 'i' }}
+
       }
 
-      if(search){
-         quary = {book_title: { $regex: search, $options: 'i' }}
+      if (category) {
+        quary = { reading_status: { $regex: `^${category}$`, $options: 'i' } }
+      }
+
+      if (search) {
+        quary = { book_title: { $regex: search, $options: 'i' } }
       }
 
       const result = await bookshelfColletion.find(quary).toArray();
@@ -99,7 +99,19 @@ async function run() {
       res.send(result)
 
     });
-    
+
+    app.delete('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+
+      const result = await bookshelfColletion.deleteOne(quary)
+
+
+      res.send(result)
+
+
+    })
+
 
 
     // Send a ping to confirm a successful connection
