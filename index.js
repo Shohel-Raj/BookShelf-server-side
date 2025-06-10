@@ -54,10 +54,25 @@ async function run() {
     app.get('/filtered', async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
+      const {  catagories, emailParams  } = req.query;
+
+      console.log(emailParams,catagories);
+
+
 
       let quary = {
 
       }
+
+
+      if (catagories) {
+        quary.book_category = { $regex: catagories, $options: 'i' };
+      }
+
+      if (emailParams) {
+        quary.userEmail = { $regex: `^${emailParams}$`, $options: 'i' };
+      }
+
 
       if (category) {
         quary = { reading_status: { $regex: `^${category}$`, $options: 'i' } }
@@ -99,6 +114,17 @@ async function run() {
       res.send(result)
 
     });
+
+    app.get('/hightestUpvoto', async (req, res) => {
+
+      const result = await bookshelfColletion.aggregate([
+        {
+          $sort: { upvote : -1 },
+        }, { $limit: 6 }
+      ]).toArray()
+
+      res.send(result)
+    })
 
     app.delete('/book/:id', async (req, res) => {
       const id = req.params.id;
