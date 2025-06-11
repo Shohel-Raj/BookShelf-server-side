@@ -34,7 +34,8 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const database = client.db('bookshelfDB')
-    const bookshelfColletion = database.collection('BooksCollection')
+    const bookshelfColletion = database.collection('BooksCollection');
+    const bookshelfReview = database.collection('reviews');
 
 
     app.get('/books', async (req, res) => {
@@ -54,9 +55,9 @@ async function run() {
     app.get('/filtered', async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
-      const {  catagories, emailParams  } = req.query;
+      const { catagories, emailParams } = req.query;
 
-      console.log(emailParams,catagories);
+      console.log(emailParams, catagories);
 
 
 
@@ -115,11 +116,25 @@ async function run() {
 
     });
 
+    app.patch('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const UpdatePlant = req.body;
+
+      const updateDoc = {
+        $set: UpdatePlant
+      }
+      const result = await bookshelfColletion.updateOne(filter, updateDoc);
+
+      res.send(result)
+
+    });
+
     app.get('/hightestUpvoto', async (req, res) => {
 
       const result = await bookshelfColletion.aggregate([
         {
-          $sort: { upvote : -1 },
+          $sort: { upvote: -1 },
         }, { $limit: 6 }
       ]).toArray()
 
@@ -131,6 +146,54 @@ async function run() {
       const quary = { _id: new ObjectId(id) };
 
       const result = await bookshelfColletion.deleteOne(quary)
+
+
+      res.send(result)
+
+
+    })
+
+
+    // --------------------review section -----------------------
+
+    app.post('/review', async (req, res) => {
+      const review = req.body;
+      const { bookId, emailParams } = req.query;
+      const result = await bookshelfReview.insertOne(review);
+      res.send(result)
+    })
+
+    app.get('/review/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { book_id: id };
+
+      const result = await bookshelfReview.find(query).toArray();
+
+      res.send(result)
+
+    })
+
+    app.put('/review/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const UpdateReview = req.body;
+      
+
+      const updateDoc = {
+        $set: UpdateReview
+      }
+      
+      const result = await bookshelfReview.updateOne(filter, updateDoc);
+
+      res.send(result)
+
+    });
+
+    app.delete('/review/:id', async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+
+      const result = await bookshelfReview.deleteOne(quary)
 
 
       res.send(result)
