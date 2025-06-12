@@ -1,6 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./firebaseAdminJdk.json");
 
 const { MongoClient, ServerApiVersion, ObjectId, } = require('mongodb');
 const app = express();
@@ -8,6 +11,12 @@ const port = process.env.PORT || 3000;
 
 app.use(cors())
 app.use(express.json())
+
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@bookshelf.ikzrbq1.mongodb.net/?retryWrites=true&w=majority&appName=Bookshelf`;
@@ -19,6 +28,28 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+const varifyFirebasetoken = async (req, res, next) => {
+  const authHeader = req.headers?.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).send({ massage: "unauthorized access" })
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+
+    const decoded = await admin.auth().verifyIdToken(token)
+
+    req.decoded = decoded;
+    next()
+  } catch (error) {
+    return res.status(401).send({ massage: "unauthorized access" })
+  }
+
+
+}
 
 
 app.get('/', (req, res) => {
@@ -38,8 +69,17 @@ async function run() {
     const bookshelfReview = database.collection('reviews');
 
 
-    app.get('/books', async (req, res) => {
+    app.get('/books', varifyFirebasetoken, async (req, res) => {
       const { emailParams } = req.query;
+      
+
+      if(emailParams){
+        if(emailParams  !== req.decoded.email){
+          return res.status(404).send({massage:'forbidden access'})
+        }
+      }
+
+
       let quary = {}
 
 
@@ -52,12 +92,16 @@ async function run() {
     })
 
 
-    app.get('/filtered', async (req, res) => {
+    app.get('/filtered', varifyFirebasetoken, async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
       const { catagories, emailParams } = req.query;
 
-      console.log(emailParams, catagories);
+      if(emailParams){
+        if(emailParams  !== req.decoded.email){
+          return res.status(404).send({massage:'forbidden access'})
+        }
+      }
 
 
 
@@ -163,7 +207,7 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/review/:id', async (req, res) => {
+    app.get('/review/:id',varifyFirebasetoken, async (req, res) => {
       const id = req.params.id;
       const query = { book_id: id };
 
@@ -173,16 +217,16 @@ async function run() {
 
     })
 
-    app.put('/review/:id', async (req, res) => {
+    app.patch('/review/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const UpdateReview = req.body;
-      
+
 
       const updateDoc = {
         $set: UpdateReview
       }
-      
+
       const result = await bookshelfReview.updateOne(filter, updateDoc);
 
       res.send(result)
