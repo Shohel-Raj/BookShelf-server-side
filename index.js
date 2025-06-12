@@ -2,10 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const admin = require("firebase-admin");
+const { MongoClient, ServerApiVersion, ObjectId, LEGAL_TCP_SOCKET_OPTIONS, } = require('mongodb');
 
-const serviceAccount = require("./firebaseAdminJdk.json");
+const firebaseKey=Buffer.from(process.env.Firebase_admin,'base64').toString('utf8')
 
-const { MongoClient, ServerApiVersion, ObjectId, } = require('mongodb');
+const serviceAccount = JSON.parse(firebaseKey);
+
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -63,7 +66,7 @@ app.get('/', (req, res) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const database = client.db('bookshelfDB')
     const bookshelfColletion = database.collection('BooksCollection');
     const bookshelfReview = database.collection('reviews');
@@ -247,9 +250,9 @@ async function run() {
 
 
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // // Send a ping to confirm a successful connection
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
