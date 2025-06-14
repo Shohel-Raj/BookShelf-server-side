@@ -42,8 +42,8 @@ A Node.js and Express backend API for managing books and user reviews, with auth
 | GET    | `/books`             | Get all books by user email          | ✅        |
 | GET    | `/filtered`          | Filter books by category/search      | ✅        |
 | GET    | `/book/:id`          | Get a specific book by ID            | ❌        |
-| POST   | `/addBook`           | Add a new book                       | ❌        |
-| PUT    | `/book/:id`          | Fully update a book by ID            | ❌        |
+| POST   | `/addBook`           | Add a new book                       | ✅        |
+| PUT    | `/book/:id`          | Fully update a book by ID            | ✅        |
 | PATCH  | `/book/:id`          | Partially update a book by ID        | ❌        |
 | DELETE | `/book/:id`          | Delete a book by ID                  | ❌        |
 | GET    | `/hightestUpvoto`    | Get top 6 books sorted by upvotes    | ❌        |
@@ -63,12 +63,12 @@ A Node.js and Express backend API for managing books and user reviews, with auth
 PORT=3000
 
 # MongoDB credentials
-|Name|Value|
-|------------|------------------|
-|DB_USER|yourMongoDBUsername |
-|DB_PASSWORD|yourMongoDBPassword|
+|Name        |Value               |
+|------------|--------------------|
+|DB_USER     |yourMongoDBUsername |
+|DB_PASSWORD |yourMongoDBPassword |
 
 # Firebase Admin credentials (Base64-encoded serviceAccountKey.json)
-|Name|Value|
-|-------|---------|
-|Firebase_admin|yourBase64EncodedFirebaseServiceAccountJSON|
+|Name             |Value                                       |
+|-----------------|--------------------------------------------|
+|Firebase_admin   |yourBase64EncodedFirebaseServiceAccountJSON |

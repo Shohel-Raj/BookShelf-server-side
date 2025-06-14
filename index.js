@@ -143,13 +143,13 @@ async function run() {
       res.send(result)
     })
 
-    app.post('/addBook', async (req, res) => {
+    app.post('/addBook',varifyFirebasetoken, async (req, res) => {
       const newBook = req.body
       const result = await bookshelfColletion.insertOne(newBook);
       res.send(result)
     })
 
-    app.put('/book/:id', async (req, res) => {
+    app.put('/book/:id',varifyFirebasetoken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const UpdatePlant = req.body;
