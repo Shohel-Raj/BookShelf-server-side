@@ -4,9 +4,11 @@ const cors = require('cors');
 const admin = require("firebase-admin");
 const { MongoClient, ServerApiVersion, ObjectId, LEGAL_TCP_SOCKET_OPTIONS, } = require('mongodb');
 
-const firebaseKey=Buffer.from(process.env.Firebase_admin,'base64').toString('utf8')
+// const firebaseKey=Buffer.from(process.env.Firebase_admin,'base64').toString('utf8')
 
-const serviceAccount = JSON.parse(firebaseKey);
+
+// const serviceAccount = JSON.parse(firebaseKey);
+var serviceAccount = require("./firebaseAdminJdk.json");
 
 
 const app = express();
@@ -66,7 +68,7 @@ app.get('/', (req, res) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
     const database = client.db('bookshelfDB')
     const bookshelfColletion = database.collection('BooksCollection');
     const bookshelfReview = database.collection('reviews');
@@ -96,6 +98,44 @@ async function run() {
 
 
     app.get('/filtered', varifyFirebasetoken, async (req, res) => {
+      const { category } = req.query;
+      const { search } = req.query;
+      const { catagories, emailParams } = req.query;
+
+      if(emailParams){
+        if(emailParams  !== req.decoded.email){
+          return res.status(404).send({massage:'forbidden access'})
+        }
+      }
+
+
+
+      let quary = {
+
+      }
+
+
+      if (catagories) {
+        quary.book_category = { $regex: catagories, $options: 'i' };
+      }
+
+      if (emailParams) {
+        quary.userEmail = { $regex: `^${emailParams}$`, $options: 'i' };
+      }
+
+
+      if (category) {
+        quary = { reading_status: { $regex: `^${category}$`, $options: 'i' } }
+      }
+
+      if (search) {
+        quary = { book_title: { $regex: search, $options: 'i' } }
+      }
+
+      const result = await bookshelfColletion.find(quary).toArray();
+      res.send(result)
+    })
+    app.get('/filtereds',  async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
       const { catagories, emailParams } = req.query;
@@ -251,8 +291,8 @@ async function run() {
 
 
     // // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
