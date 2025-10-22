@@ -23,7 +23,6 @@ admin.initializeApp({
 });
 
 
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@bookshelf.ikzrbq1.mongodb.net/?retryWrites=true&w=majority&appName=Bookshelf`;
 
 const client = new MongoClient(uri, {
@@ -72,6 +71,7 @@ async function run() {
     const database = client.db('bookshelfDB')
     const bookshelfColletion = database.collection('BooksCollection');
     const bookshelfReview = database.collection('reviews');
+    const userSubscriptions = database.collection('subscription');
 
 
     app.get('/books', varifyFirebasetoken, async (req, res) => {
@@ -186,6 +186,12 @@ async function run() {
     app.post('/addBook',varifyFirebasetoken, async (req, res) => {
       const newBook = req.body
       const result = await bookshelfColletion.insertOne(newBook);
+      res.send(result)
+    })
+
+    app.post('/subscription',async(req,res)=>{
+      const subscriptionUser =req.body
+      const result= await userSubscriptions.insertOne(subscriptionUser);
       res.send(result)
     })
 
