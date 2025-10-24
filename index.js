@@ -1,27 +1,28 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
 const admin = require("firebase-admin");
-const { MongoClient, ServerApiVersion, ObjectId, LEGAL_TCP_SOCKET_OPTIONS, } = require('mongodb');
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+  LEGAL_TCP_SOCKET_OPTIONS,
+} = require("mongodb");
 
 // const firebaseKey=Buffer.from(process.env.Firebase_admin,'base64').toString('utf8')
-
 
 // const serviceAccount = JSON.parse(firebaseKey);
 var serviceAccount = require("./firebaseAdminJdk.json");
 
-
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors())
-app.use(express.json())
-
+app.use(cors());
+app.use(express.json());
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@bookshelf.ikzrbq1.mongodb.net/?retryWrites=true&w=majority&appName=Bookshelf`;
 
@@ -30,275 +31,273 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 const varifyFirebasetoken = async (req, res, next) => {
   const authHeader = req.headers?.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).send({ massage: "unauthorized access" })
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).send({ massage: "unauthorized access" });
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
 
   try {
-
-    const decoded = await admin.auth().verifyIdToken(token)
+    const decoded = await admin.auth().verifyIdToken(token);
 
     req.decoded = decoded;
-    next()
+    next();
   } catch (error) {
-    return res.status(401).send({ massage: "unauthorized access" })
+    return res.status(401).send({ massage: "unauthorized access" });
   }
+};
 
-
-}
-
-
-app.get('/', (req, res) => {
-  res.send('Bookshelf server is runing')
-})
-
-
-
-
+app.get("/", (req, res) => {
+  res.send("Bookshelf server is runing");
+});
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const database = client.db('bookshelfDB')
-    const bookshelfColletion = database.collection('BooksCollection');
-    const bookshelfReview = database.collection('reviews');
-    const userSubscriptions = database.collection('subscription');
+    const database = client.db("bookshelfDB");
+    const bookshelfColletion = database.collection("BooksCollection");
+    const bookshelfReview = database.collection("reviews");
+    const userRole = database.collection("user");
+    const userSubscriptions = database.collection("subscription");
 
-
-    app.get('/books', varifyFirebasetoken, async (req, res) => {
+    app.get("/books", varifyFirebasetoken, async (req, res) => {
       const { emailParams } = req.query;
-      
 
-      if(emailParams){
-        if(emailParams  !== req.decoded.email){
-          return res.status(404).send({massage:'forbidden access'})
+      if (emailParams) {
+        if (emailParams !== req.decoded.email) {
+          return res.status(404).send({ massage: "forbidden access" });
         }
       }
 
-
-      let quary = {}
-
+      let quary = {};
 
       if (emailParams) {
-        quary = { userEmail: { $regex: `^${emailParams}$`, } }
+        quary = { userEmail: { $regex: `^${emailParams}$` } };
       }
 
       const result = await bookshelfColletion.find(quary).toArray();
-      res.send(result)
-    })
+      res.send(result);
+    });
 
-
-    app.get('/filtered', varifyFirebasetoken, async (req, res) => {
+    app.get("/filtered", varifyFirebasetoken, async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
       const { catagories, emailParams } = req.query;
 
-      if(emailParams){
-        if(emailParams  !== req.decoded.email){
-          return res.status(404).send({massage:'forbidden access'})
+      if (emailParams) {
+        if (emailParams !== req.decoded.email) {
+          return res.status(404).send({ massage: "forbidden access" });
         }
       }
 
-
-
-      let quary = {
-
-      }
-
+      let quary = {};
 
       if (catagories) {
-        quary.book_category = { $regex: catagories, $options: 'i' };
+        quary.book_category = { $regex: catagories, $options: "i" };
       }
 
       if (emailParams) {
-        quary.userEmail = { $regex: `^${emailParams}$`, $options: 'i' };
+        quary.userEmail = { $regex: `^${emailParams}$`, $options: "i" };
       }
 
-
       if (category) {
-        quary = { reading_status: { $regex: `^${category}$`, $options: 'i' } }
+        quary = { reading_status: { $regex: `^${category}$`, $options: "i" } };
       }
 
       if (search) {
-        quary = { book_title: { $regex: search, $options: 'i' } }
+        quary = { book_title: { $regex: search, $options: "i" } };
       }
 
       const result = await bookshelfColletion.find(quary).toArray();
-      res.send(result)
-    })
-    app.get('/filtereds',  async (req, res) => {
+      res.send(result);
+    });
+    app.get("/filtereds", async (req, res) => {
       const { category } = req.query;
       const { search } = req.query;
       const { catagories, emailParams } = req.query;
 
-      if(emailParams){
-        if(emailParams  !== req.decoded.email){
-          return res.status(404).send({massage:'forbidden access'})
+      if (emailParams) {
+        if (emailParams !== req.decoded.email) {
+          return res.status(404).send({ massage: "forbidden access" });
         }
       }
 
-
-
-      let quary = {
-
-      }
-
+      let quary = {};
 
       if (catagories) {
-        quary.book_category = { $regex: catagories, $options: 'i' };
+        quary.book_category = { $regex: catagories, $options: "i" };
       }
 
       if (emailParams) {
-        quary.userEmail = { $regex: `^${emailParams}$`, $options: 'i' };
+        quary.userEmail = { $regex: `^${emailParams}$`, $options: "i" };
       }
 
-
       if (category) {
-        quary = { reading_status: { $regex: `^${category}$`, $options: 'i' } }
+        quary = { reading_status: { $regex: `^${category}$`, $options: "i" } };
       }
 
       if (search) {
-        quary = { book_title: { $regex: search, $options: 'i' } }
+        quary = { book_title: { $regex: search, $options: "i" } };
       }
 
       const result = await bookshelfColletion.find(quary).toArray();
-      res.send(result)
-    })
-
-    app.get('/book/:id', async (req, res) => {
-      const id = req.params.id;
-      const quary = { _id: new ObjectId(id) }
-
-      const result = await bookshelfColletion.findOne(quary);
-
-      res.send(result)
-    })
-
-    app.post('/addBook',varifyFirebasetoken, async (req, res) => {
-      const newBook = req.body
-      const result = await bookshelfColletion.insertOne(newBook);
-      res.send(result)
-    })
-
-    app.post('/subscription',async(req,res)=>{
-      const subscriptionUser =req.body
-      const result= await userSubscriptions.insertOne(subscriptionUser);
-      res.send(result)
-    })
-
-    app.put('/book/:id',varifyFirebasetoken, async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const UpdatePlant = req.body;
-
-      const updateDoc = {
-        $set: UpdatePlant
-      }
-      const result = await bookshelfColletion.updateOne(filter, updateDoc);
-
-      res.send(result)
-
+      res.send(result);
     });
 
-    app.patch('/book/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const UpdatePlant = req.body;
-
-      const updateDoc = {
-        $set: UpdatePlant
-      }
-      const result = await bookshelfColletion.updateOne(filter, updateDoc);
-
-      res.send(result)
-
-    });
-
-    app.get('/hightestUpvoto', async (req, res) => {
-
-      const result = await bookshelfColletion.aggregate([
-        {
-          $sort: { upvote: -1 },
-        }, { $limit: 6 }
-      ]).toArray()
-
-      res.send(result)
-    })
-
-    app.delete('/book/:id', async (req, res) => {
+    app.get("/book/:id", async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
 
-      const result = await bookshelfColletion.deleteOne(quary)
+      const result = await bookshelfColletion.findOne(quary);
 
+      res.send(result);
+    });
 
-      res.send(result)
+    app.post("/addBook", varifyFirebasetoken, async (req, res) => {
+      const newBook = req.body;
+      const result = await bookshelfColletion.insertOne(newBook);
+      res.send(result);
+    });
+    app.post("/user-role", async (req, res) => {
+      const userData = req.body;
+      const result = await userRole.insertOne(userData);
+      res.send(result);
+    });
+    // 🔹 GET: Get user role by email
+    app.get("/get-user-role", async (req, res) => {
+      try {
+        const email = req.query.email;
 
+        if (!email) {
+          return res
+            .status(400)
+            .json({ message: "Email query parameter is required" });
+        }
 
-    })
+        const user = await userRole.findOne({ email: email });
 
+        if (!user) {
+          return res.status(404).json({ message: "User role not found" });
+        }
+
+        res.status(200).json({
+          message: "User role fetched successfully",
+          role: user.role,
+          user,
+        });
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    app.post("/subscription", async (req, res) => {
+      const subscriptionUser = req.body;
+      const result = await userSubscriptions.insertOne(subscriptionUser);
+      res.send(result);
+    });
+
+    app.put("/book/:id", varifyFirebasetoken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const UpdatePlant = req.body;
+
+      const updateDoc = {
+        $set: UpdatePlant,
+      };
+      const result = await bookshelfColletion.updateOne(filter, updateDoc);
+
+      res.send(result);
+    });
+
+    app.patch("/book/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const UpdatePlant = req.body;
+
+      const updateDoc = {
+        $set: UpdatePlant,
+      };
+      const result = await bookshelfColletion.updateOne(filter, updateDoc);
+
+      res.send(result);
+    });
+
+    app.get("/hightestUpvoto", async (req, res) => {
+      const result = await bookshelfColletion
+        .aggregate([
+          {
+            $sort: { upvote: -1 },
+          },
+          { $limit: 6 },
+        ])
+        .toArray();
+
+      res.send(result);
+    });
+
+    app.delete("/book/:id", async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+
+      const result = await bookshelfColletion.deleteOne(quary);
+
+      res.send(result);
+    });
 
     // --------------------review section -----------------------
 
-    app.post('/review', async (req, res) => {
+    app.post("/review", async (req, res) => {
       const review = req.body;
       const { bookId, emailParams } = req.query;
       const result = await bookshelfReview.insertOne(review);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
-    app.get('/review/:id',varifyFirebasetoken, async (req, res) => {
+    app.get("/review/:id", varifyFirebasetoken, async (req, res) => {
       const id = req.params.id;
       const query = { book_id: id };
 
       const result = await bookshelfReview.find(query).toArray();
 
-      res.send(result)
+      res.send(result);
+    });
 
-    })
-
-    app.patch('/review/:id', async (req, res) => {
+    app.patch("/review/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const UpdateReview = req.body;
 
-
       const updateDoc = {
-        $set: UpdateReview
-      }
+        $set: UpdateReview,
+      };
 
       const result = await bookshelfReview.updateOne(filter, updateDoc);
 
-      res.send(result)
-
+      res.send(result);
     });
 
-    app.delete('/review/:id', async (req, res) => {
+    app.delete("/review/:id", async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
 
-      const result = await bookshelfReview.deleteOne(quary)
+      const result = await bookshelfReview.deleteOne(quary);
 
-
-      res.send(result)
-
-
-    })
-
-
+      res.send(result);
+    });
 
     // // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -307,5 +306,5 @@ async function run() {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log('server runing on port ', port);
-})
+  console.log("server runing on port ", port);
+});
