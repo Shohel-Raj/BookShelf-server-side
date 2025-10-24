@@ -66,6 +66,7 @@ async function run() {
     const bookshelfReview = database.collection("reviews");
     const userRole = database.collection("user");
     const userSubscriptions = database.collection("subscription");
+    const contactMessages=database.collection("contuct-massage")
 
     app.get("/books", varifyFirebasetoken, async (req, res) => {
       const { emailParams } = req.query;
@@ -171,7 +172,7 @@ async function run() {
       res.send(result);
     });
     // 🔹 GET: Get user role by email
-    app.get("/get-user-role", async (req, res) => {
+    app.get("/get-user-role", varifyFirebasetoken, async (req, res) => {
       try {
         const email = req.query.email;
 
@@ -292,6 +293,88 @@ async function run() {
 
       res.send(result);
     });
+
+    // admin
+    // 🔹 Admin Overview
+    app.get("/admin/overview", varifyFirebasetoken, async (req, res) => {
+      try {
+        // Optional: Only allow admins
+        const requestingUser = await userRole.findOne({
+          email: req.decoded.email,
+        });
+        if (!requestingUser || requestingUser.role !== "admin") {
+          return res.status(403).json({ message: "Forbidden. Admins only." });
+        }
+
+        const totalUsers = await userRole.countDocuments();
+        const totalBooks = await bookshelfColletion.countDocuments();
+        const totalReviews = await bookshelfReview.countDocuments();
+        const totalSubscriptions = await userSubscriptions.countDocuments();
+
+        const topBooks = await bookshelfColletion
+          .find()
+          .sort({ upvote: -1 })
+          .limit(5)
+          .toArray();
+
+        res.status(200).json({
+          totalUsers,
+          totalBooks,
+          totalReviews,
+          totalSubscriptions,
+          topBooks,
+        });
+      } catch (error) {
+        console.error("Error fetching admin overview:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    // Submit contact message
+app.post("/contact-us-by-user", async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ message: "Name, email, and message are required" });
+    }
+
+    const newMessage = {
+      name,
+      email,
+      subject: subject || "",
+      message,
+      createdAt: new Date(),
+    };
+
+    const result = await contactMessages.insertOne(newMessage);
+
+    res.status(201).json({
+      message: "Your message has been received",
+      id: result.insertedId,
+    });
+  } catch (error) {
+    console.error("Error submitting contact message:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+// Get all contact messages (admin only)
+app.get("/contact-us", varifyFirebasetoken, async (req, res) => {
+  try {
+    const requestingUser = await userRole.findOne({ email: req.decoded.email });
+    if (!requestingUser || requestingUser.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden. Admins only." });
+    }
+
+    const messages = await contactMessages.find().sort({ createdAt: -1 }).toArray();
+
+    res.status(200).json({ messages });
+  } catch (error) {
+    console.error("Error fetching contact messages:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
     // // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
