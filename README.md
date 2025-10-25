@@ -1,18 +1,20 @@
 # 📚 Bookshelf Server
 
-A Node.js and Express backend API for managing books and user reviews, with authentication via Firebase and data stored in MongoDB.
+A Node.js & Express backend API for managing books, reviews, user roles, subscriptions, and contact messages. Authentication is handled via Firebase, and data is stored in MongoDB Atlas.
 
 ---
 
 ## 🚀 Features
 
-- 🔐 Firebase Authentication (with token verification)
-- 📚 Book management (CRUD operations)
+- 🔐 Firebase Authentication with token verification
+- 📚 Full book management (CRUD operations)
 - 📝 Review system for books
-- 🔍 Filtering & searching capabilities
+- 🧑‍💻 User roles & admin features
+- 📧 Subscription & contact message handling
+- 🔍 Filtering & search capabilities
 - 📊 Top-voted books API
 - 🌐 MongoDB Atlas integration
-- 🛡️ Environment variable-based secure configuration
+- 🛡️ Secure configuration via environment variables
 
 ---
 
@@ -27,15 +29,13 @@ A Node.js and Express backend API for managing books and user reviews, with auth
 
 ---
 
-
-### 🔐 Auth Middleware
+## 🔐 Authentication
 
 - Protected routes require the `Authorization` header:  
-  `Bearer <FirebaseIDToken>`
 
 ---
 
-### 📚 Books
+## 📚 Books API
 
 | Method | Endpoint             | Description                          | Protected |
 |--------|----------------------|--------------------------------------|-----------|
@@ -50,7 +50,7 @@ A Node.js and Express backend API for managing books and user reviews, with auth
 
 ---
 
-### 📝 Reviews
+## 📝 Reviews API
 
 | Method | Endpoint             | Description                          | Protected |
 |--------|----------------------|--------------------------------------|-----------|
@@ -59,16 +59,47 @@ A Node.js and Express backend API for managing books and user reviews, with auth
 | PATCH  | `/review/:id`        | Update a review by ID                | ❌        |
 | DELETE | `/review/:id`        | Delete a review by ID                | ❌        |
 
+---
 
+## 🧑‍💻 User Roles
+
+- **POST** `/user-role` – Create a user role  
+- **GET** `/get-user-role?email=<email>` – Get role by email (protected)
+
+---
+
+## 📧 Subscription API
+
+- **POST** `/subscription` – Subscribe a user
+
+---
+
+## 📨 Contact Messages
+
+- **POST** `/contact-us-by-user` – Submit a contact message  
+- **GET** `/contact-us` – Get all messages (admin only)
+
+---
+
+## 🛡️ Admin Overview
+
+- **GET** `/admin/overview` – Fetch dashboard stats (protected/admin only)
+- Total users
+- Total books
+- Total reviews
+- Total subscriptions
+- Top 5 books by upvotes
+
+---
+
+## ⚙️ Environment Variables
+
+```bash
 PORT=3000
 
 # MongoDB credentials
-|Name        |Value               |
-|------------|--------------------|
-|DB_USER     |yourMongoDBUsername |
-|DB_PASSWORD |yourMongoDBPassword |
+DB_USER=yourMongoDBUsername
+DB_PASSWORD=yourMongoDBPassword
 
 # Firebase Admin credentials (Base64-encoded serviceAccountKey.json)
-|Name             |Value                                       |
-|-----------------|--------------------------------------------|
-|Firebase_admin   |yourBase64EncodedFirebaseServiceAccountJSON |
+Firebase_admin=yourBase64EncodedFirebaseServiceAccountJSON
