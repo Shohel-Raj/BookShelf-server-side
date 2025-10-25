@@ -17,7 +17,17 @@ var serviceAccount = require("./firebaseAdminJdk.json");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://bookshelfupdate.vercel.app",
+      "https://book-shelf-7d010.web.app"
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 admin.initializeApp({
